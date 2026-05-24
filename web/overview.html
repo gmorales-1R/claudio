@@ -110,7 +110,7 @@
   // ── Parse markdown task table ──────────────────────────
   async function loadTasks() {
     try {
-      const res = await fetch('../tasks/tasks.md');
+      const res = await fetch('/tasks/tasks.md');
       const text = await res.text();
       const lines = text.split('\n').filter(l => l.startsWith('|') && !l.startsWith('| ID') && !l.startsWith('|-'));
       tasks = lines.map(line => {
@@ -125,7 +125,7 @@
   // ── Parse CSV calendar ─────────────────────────────────
   async function loadCalendar() {
     try {
-      const res = await fetch('../tasks/calendar.csv');
+      const res = await fetch('/tasks/calendar.csv');
       const text = await res.text();
       const lines = text.trim().split('\n').slice(1);
       events = lines.map(line => {
