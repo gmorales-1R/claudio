@@ -52,3 +52,13 @@ This repo is public. Treat every commit as visible to the world.
 - Before committing, **redact or anonymize**: names, emails, org names, project names, locations, any PII
 - Keep chat records factual and brief — what was built, decided, or learned
 - Format: `chats/YYYY-MM-DD.md`
+
+## Secrets & Vault Policy
+
+- **Never use third-party secret managers** — no GitHub Secrets, no Vercel env vars, no AWS Secrets Manager, no Doppler, no 1Password integrations
+- Secrets are **encrypted and committed** to the repo — the ciphertext is safe to be public
+- **Private keys never leave the user** — they are never committed, never pasted in chat, never stored anywhere but the user's own device
+- The vault lives in `vault/` — encrypted blobs only, no plaintext secrets ever
+- Encryption: **AES-256-GCM** symmetric encryption, key derived from a passphrase the user holds
+- One passphrase to rule them all — user provides it at session time to decrypt what's needed
+- If a secret is needed at runtime (e.g. Supabase anon key in the browser), it is decrypted **client-side** by the user's passphrase, never by the server
