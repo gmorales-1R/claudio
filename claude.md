@@ -39,3 +39,16 @@ These rules apply to all commits made by Claudio — no exceptions.
 - If something was accidentally committed, flag it immediately so Guille can rotate the credential and purge the history
 
 This repo is public. Treat every commit as visible to the world.
+
+## Content Guidelines
+
+- Keep files **simple and generic** — no over-engineering, no bloat
+- Files like `soul.md`, `claude.md` should stay concise and principles-based, not session-specific
+- Let files grow organically from real usage, not speculation
+
+## Chat Records
+
+- Summaries of sessions are stored in `chats/`
+- Before committing, **redact or anonymize**: names, emails, org names, project names, locations, any PII
+- Keep chat records factual and brief — what was built, decided, or learned
+- Format: `chats/YYYY-MM-DD.md`
