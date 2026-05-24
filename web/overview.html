@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Claudio — Overview</title>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --accent: #7fffd4;
+      --text: #e0e0e0;
+      --muted: #888;
+      --error: #ff6b6b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 1.5rem; }
+    h1 { color: var(--accent); font-size: 1.2rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 2rem; }
+    h2 { font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+    section { margin-bottom: 2.5rem; }
+
+    /* Tasks */
+    .task-list { list-style: none; }
+    .task-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      margin-bottom: 0.4rem;
+      border-radius: 3px;
+    }
+    .task-item.done { opacity: 0.4; }
+    .task-item.done .task-title { text-decoration: line-through; }
+    .task-priority { font-size: 0.7rem; color: var(--muted); width: 50px; }
+    .task-priority.high { color: var(--error); }
+    .task-priority.medium { color: #f0c040; }
+    .task-title { flex: 1; font-size: 0.9rem; }
+    .task-due { font-size: 0.75rem; color: var(--muted); }
+    .task-actions { display: flex; gap: 0.4rem; }
+    .btn {
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 0.2rem 0.5rem; font-family: inherit; font-size: 0.75rem;
+      cursor: pointer; border-radius: 2px;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { border-color: var(--accent); color: var(--accent); }
+    .btn.danger:hover { border-color: var(--error); color: var(--error); }
+
+    /* Add task form */
+    .add-form {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem;
+    }
+    .add-form input, .add-form select {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); font-family: inherit; font-size: 0.85rem;
+      padding: 0.4rem 0.6rem; border-radius: 2px; outline: none;
+    }
+    .add-form input:focus, .add-form select:focus { border-color: var(--accent); }
+    .add-form input[name=title] { flex: 1; min-width: 150px; }
+
+    /* Calendar */
+    .cal-list { list-style: none; }
+    .cal-item {
+      display: flex; gap: 1rem; align-items: baseline;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      margin-bottom: 0.4rem;
+      border-radius: 3px;
+    }
+    .cal-date { color: var(--accent); font-size: 0.8rem; white-space: nowrap; }
+    .cal-title { flex: 1; font-size: 0.9rem; }
+    .cal-notes { font-size: 0.75rem; color: var(--muted); }
+
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 0.5rem; }
+    .empty { color: var(--muted); font-size: 0.85rem; padding: 0.5rem 0; }
+  </style>
+</head>
+<body>
+
+<h1><span class="status-dot"></span>Claudio — Overview</h1>
+
+<section id="tasks-section">
+  <h2>Tasks</h2>
+  <ul class="task-list" id="task-list"></ul>
+  <div class="add-form">
+    <input name="title" placeholder="New task..." />
+    <select name="priority">
+      <option value="medium">medium</option>
+      <option value="high">high</option>
+      <option value="low">low</option>
+    </select>
+    <input name="due" type="date" />
+    <button class="btn primary" onclick="addTask()">+ add</button>
+  </div>
+</section>
+
+<section id="calendar-section">
+  <h2>Upcoming</h2>
+  <ul class="cal-list" id="cal-list"></ul>
+</section>
+
+<script>
+  // ── State ──────────────────────────────────────────────
+  let tasks = [];
+  let events = [];
+  let nextId = 1;
+
+  // ── Parse markdown task table ──────────────────────────
+  async function loadTasks() {
+    try {
+      const res = await fetch('../tasks/tasks.md');
+      const text = await res.text();
+      const lines = text.split('\n').filter(l => l.startsWith('|') && !l.startsWith('| ID') && !l.startsWith('|-'));
+      tasks = lines.map(line => {
+        const cols = line.split('|').map(c => c.trim()).filter(Boolean);
+        return { id: parseInt(cols[0]), title: cols[1], status: cols[2], priority: cols[3], due: cols[4], notes: cols[5] || '' };
+      }).filter(t => t.id);
+      nextId = tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+    } catch(e) { tasks = []; }
+    renderTasks();
+  }
+
+  // ── Parse CSV calendar ─────────────────────────────────
+  async function loadCalendar() {
+    try {
+      const res = await fetch('../tasks/calendar.csv');
+      const text = await res.text();
+      const lines = text.trim().split('\n').slice(1);
+      events = lines.map(line => {
+        const [id, title, date, time, notes] = line.split(',');
+        return { id, title, date, time, notes };
+      });
+    } catch(e) { events = []; }
+    renderCalendar();
+  }
+
+  // ── Render tasks ───────────────────────────────────────
+  function renderTasks() {
+    const ul = document.getElementById('task-list');
+    if (!tasks.length) { ul.innerHTML = '<li class="empty">No tasks.</li>'; return; }
+    ul.innerHTML = tasks.map(t => `
+      <li class="task-item ${t.status === 'done' ? 'done' : ''}">
+        <span class="task-priority ${t.priority}">${t.priority}</span>
+        <span class="task-title">${t.title}</span>
+        <span class="task-due">${t.due || ''}</span>
+        <div class="task-actions">
+          ${t.status !== 'done' ? `<button class="btn" onclick="completeTask(${t.id})">done</button>` : ''}
+          <button class="btn danger" onclick="deleteTask(${t.id})">x</button>
+        </div>
+      </li>`).join('');
+  }
+
+  // ── Render calendar ────────────────────────────────────
+  function renderCalendar() {
+    const ul = document.getElementById('cal-list');
+    const today = new Date().toISOString().split('T')[0];
+    const upcoming = events.filter(e => e.date >= today).sort((a,b) => a.date.localeCompare(b.date));
+    if (!upcoming.length) { ul.innerHTML = '<li class="empty">No upcoming events.</li>'; return; }
+    ul.innerHTML = upcoming.map(e => `
+      <li class="cal-item">
+        <span class="cal-date">${e.date} ${e.time}</span>
+        <span class="cal-title">${e.title}</span>
+        <span class="cal-notes">${e.notes || ''}</span>
+      </li>`).join('');
+  }
+
+  // ── CRUD ───────────────────────────────────────────────
+  function addTask() {
+    const title = document.querySelector('input[name=title]').value.trim();
+    const priority = document.querySelector('select[name=priority]').value;
+    const due = document.querySelector('input[name=due]').value;
+    if (!title) return;
+    tasks.push({ id: nextId++, title, status: 'todo', priority, due, notes: '' });
+    document.querySelector('input[name=title]').value = '';
+    renderTasks();
+    saveTasks();
+  }
+
+  function completeTask(id) {
+    const t = tasks.find(t => t.id === id);
+    if (t) { t.status = 'done'; renderTasks(); saveTasks(); }
+  }
+
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    renderTasks();
+    saveTasks();
+  }
+
+  // ── Save back to tasks.md via note ─────────────────────
+  function saveTasks() {
+    // In this file-based PoC, changes are in-memory only.
+    // Claudio (via session) can commit the updated tasks.md.
+    console.log('Tasks state:', JSON.stringify(tasks, null, 2));
+  }
+
+  // ── Init ───────────────────────────────────────────────
+  loadTasks();
+  loadCalendar();
+</script>
+</body>
+</html>
