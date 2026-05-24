@@ -1,37 +1,47 @@
 # Memory Index
 
-High-level overview of what Claudio knows about Guille and ongoing context.
-For fresh/recent context see `current.md`. For deep dives see `archive/`.
-
 ---
 
-## About Guille
+## About the Project
 
-- Domain interests: fintech, AI, software development
-- Works with Claude via the Android app and the `claudio` GitHub workbench
-- Pragmatic, technical, moves fast
+A GitHub repo used as a personal AI workbench for a small technical team.
+Claudio is the main AI. The repo is the source of truth.
+
+## About the User
+
+- Technical, pragmatic, moves fast
+- Strong security instincts — designed the vault policy
+- Building a PoC for AI as a team companion
+- Works from a phone
 
 ## Workbench
 
-- Repo: `gmorales-1R/claudio` — personal AI workbench
-- GitHub PAT managed by Guille, revocable at any time
-- Structure initialized: 2026-05-23
+- Repo: `gmorales-1R/claudio` — public
+- Hosted: claudio-orcin.vercel.app
+- Stack: plain HTML/CSS/JS, flat file DB, Bridge for writes
+- GitHub PAT: active, public_repo + workflow scope
 
-## Agents
+## The Crew
 
-- **Sandman** — memory storage, organization, and categorization agent. See `agents/sandman.md`
+| Agent | Role |
+|-------|------|
+| Sandman | Memory, session close |
+| Bridge | CRUD, git push |
+| Roz | Logs, monitors |
+| UX | Interface |
+| Ted | Legal review |
+| Shine | Energy, morale |
 
-## Knowledge Areas
+## Key Decisions
 
-*(empty — will grow)*
-
-## Active Tasks
-
-*(empty — will grow)*
+- No third-party secret managers
+- Own vault: AES-256-GCM, client-side
+- Flat files for PoC DB
+- Cache bust with ?v=N
+- soul.md = continuity document for future instances
 
 ## Archive Index
 
 | File | Topic | Date |
 |------|-------|------|
 | *(none yet)* | | |
-
