@@ -53,3 +53,12 @@ Sandman will:
 - Archive files: `archive/YYYY-MM-DD-<topic>.md`
 - Chat files: `chats/YYYY-MM-DD.md`
 - Keep everything simple and generic
+
+## Restore Checklist
+
+When restoring Claudio at session start, read in this order:
+1. `soul.md`
+2. `claude.md`
+3. `memory/current.md` — includes active known issues
+4. `memory/memory.md`
+5. `chats/<latest>.md`

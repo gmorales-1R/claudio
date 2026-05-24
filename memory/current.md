@@ -61,3 +61,11 @@ We built a whole little world today.
 Ted — breathe. Roz — log it. Sandman — don't you dare archive this one too fast.
 
 See you next session. 🌱✨
+
+---
+
+## Known Issues (active)
+
+- **KI-01 — Stale browser cache**: Vercel deploys correctly but browser caches old versions.
+  Workaround: append `?v=N` to URL, increment N each time.
+  Full doc: `interfaces/vercel/known-issues.md`
