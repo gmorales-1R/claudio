@@ -3,10 +3,7 @@ name: Sandman — Session Cleanup
 on:
   push:
     branches: [main]
-    paths:
-      - 'memory/current.md'
-      - 'chats/**'
-  workflow_dispatch:  # manual trigger
+  workflow_dispatch:
 
 jobs:
   validate:
@@ -20,24 +17,33 @@ jobs:
           python3 - << 'PYEOF'
           import sys
           with open('tasks/tasks.md') as f:
-              lines = [l.strip() for l in f if l.startswith('|') and not l.startswith('|-')]
+              lines = [l.strip() for l in f if l.strip().startswith('|') and not l.strip().startswith('|-')]
           header = lines[0] if lines else ''
           required = ['ID','Title','Status','Priority','Due','Notes']
           for col in required:
               if col not in header:
                   print(f"FAIL: missing column {col}")
                   sys.exit(1)
+          errors = 0
           for line in lines[1:]:
-              cols = [c.strip() for c in line.split('|') if c.strip()]
+              # Split and strip, allow empty last column
+              cols = [c.strip() for c in line.split('|')]
+              cols = [c for c in cols]  # keep all including empty
+              # Remove first and last empty from outer pipes
+              if cols and cols[0] == '': cols = cols[1:]
+              if cols and cols[-1] == '': cols = cols[:-1]
               if len(cols) != 6:
-                  print(f"FAIL: bad row: {line}")
-                  sys.exit(1)
+                  print(f"FAIL: expected 6 cols, got {len(cols)}: {line}")
+                  errors += 1
+                  continue
               if cols[2] not in ('todo','in-progress','done'):
-                  print(f"FAIL: invalid status '{cols[2]}'")
-                  sys.exit(1)
+                  print(f"FAIL: invalid status '{cols[2]}' in: {line}")
+                  errors += 1
               if cols[3] not in ('high','medium','low'):
-                  print(f"FAIL: invalid priority '{cols[3]}'")
-                  sys.exit(1)
+                  print(f"FAIL: invalid priority '{cols[3]}' in: {line}")
+                  errors += 1
+          if errors:
+              sys.exit(1)
           print(f"OK: tasks.md valid — {len(lines)-1} tasks")
           PYEOF
 
