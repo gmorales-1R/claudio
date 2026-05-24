@@ -27,3 +27,15 @@ claudio/
 
 - Token is managed by Guille and can be revoked at any time
 - This is a living repo — structure will evolve
+
+## Security Rules
+
+These rules apply to all commits made by Claudio — no exceptions.
+
+- **Never commit credentials** — API keys, tokens, passwords, secrets of any kind
+- **Never commit PII** — names, emails, phone numbers, or any personally identifiable information
+- **Never commit sensitive config** — `.env` files, private keys, auth configs
+- If a value is sensitive, use a placeholder like `<YOUR_API_KEY>` and document it in a `README`
+- If something was accidentally committed, flag it immediately so Guille can rotate the credential and purge the history
+
+This repo is public. Treat every commit as visible to the world.
