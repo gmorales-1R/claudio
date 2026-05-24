@@ -5,44 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Claudio Workbench</title>
   <style>
+    :root {
+      --bg: #0d0d0d; --surface: #1a1a1a; --border: #2a2a2a;
+      --accent: #7fffd4; --text: #e0e0e0; --muted: #888;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
+      background: var(--bg); color: var(--text);
       font-family: 'Courier New', monospace;
-      background: #0d0d0d;
-      color: #e0e0e0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      min-height: 100vh; padding: 2rem; text-align: center;
     }
-    .container {
-      text-align: center;
+    h1 { font-size: 1.4rem; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 3rem; }
+    .haiku {
+      border-left: 2px solid var(--accent);
+      padding: 0.75rem 1.25rem;
+      text-align: left;
+      font-size: 0.95rem;
+      line-height: 2;
+      color: var(--text);
+      background: var(--surface);
+      border-radius: 0 3px 3px 0;
+      margin-bottom: 3rem;
+      min-width: 220px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
     }
-    h1 {
-      font-size: 2.5rem;
-      color: #7fffd4;
-      margin-bottom: 0.5rem;
+    .haiku.visible { opacity: 1; transform: translateY(0); }
+    .haiku.error { color: var(--muted); font-size: 0.82rem; border-color: var(--muted); }
+    .nav a {
+      color: var(--muted); text-decoration: none; font-size: 0.82rem;
+      border: 1px solid var(--border); padding: 0.3rem 0.75rem;
+      border-radius: 2px; margin: 0 0.25rem;
+      transition: border-color 0.15s, color 0.15s;
     }
-    p {
-      color: #888;
-      font-size: 1rem;
-    }
-    .status {
-      margin-top: 2rem;
-      padding: 0.5rem 1.5rem;
-      border: 1px solid #7fffd4;
-      border-radius: 4px;
-      color: #7fffd4;
-      font-size: 0.85rem;
-      display: inline-block;
-    }
+    .nav a:hover { border-color: var(--accent); color: var(--accent); }
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 0.5rem; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Claudio</h1>
-    <p>Personal AI Workbench</p>
-    <div class="status">⬤ online</div>
-  </div>
+  <h1><span class="status-dot"></span>Claudio</h1>
+  <p class="subtitle">Personal AI Workbench</p>
+
+  <div class="haiku" id="haiku"></div>
+
+  <nav class="nav">
+    <a href="/web/overview.html">overview</a>
+    <a href="/vault/unlock.html">vault</a>
+  </nav>
+
+  <script>
+    async function loadHaiku() {
+      const el = document.getElementById('haiku');
+      try {
+        const res = await fetch('/web/haiku.txt');
+        const text = await res.text();
+        el.innerHTML = text.trim().split('\n').map(l => `<div>${l}</div>`).join('');
+      } catch {
+        el.classList.add('error');
+        el.textContent = 'haiku unavailable';
+      }
+      requestAnimationFrame(() => el.classList.add('visible'));
+    }
+    loadHaiku();
+  </script>
 </body>
 </html>
