@@ -78,43 +78,48 @@ jobs:
           with open('memory/current.md') as f:
               content = f.read()
 
-          # Split into sections by --- divider
           sections = re.split(r'\n---\n', content)
-          
-          header = sections[0]  # Keep the file header always
+          header = sections[0]
           body_sections = sections[1:]
 
           keep = []
           archive = []
+          today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
           for section in body_sections:
               stripped = section.strip()
               if not stripped:
                   continue
 
-              # Detect stale session notes: "## Session: YYYY-MM-DD" older than 2 days
+              # Archive stale session notes (>= 1 day old)
               session_match = re.search(r'## Session: (\d{4}-\d{2}-\d{2})', stripped)
               if session_match:
                   session_date = datetime.strptime(session_match.group(1), '%Y-%m-%d').replace(tzinfo=timezone.utc)
                   age_days = (datetime.now(timezone.utc) - session_date).days
-                  if age_days >= 2:
+                  if age_days >= 1:
                       archive.append(stripped)
                       print(f"ARCHIVE: session note from {session_match.group(1)} ({age_days} days old)")
                       continue
 
+              # Archive Shine highlights (preserved in soul.md, not needed in cache)
+              if '## Shine —' in stripped:
+                  archive.append(stripped)
+                  print(f"ARCHIVE: Shine entry")
+                  continue
+
               keep.append(stripped)
 
-          # Archive stale sections
           if archive:
-              today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
               archive_path = f'memory/archive/{today}-sessions.md'
               os.makedirs('memory/archive', exist_ok=True)
-              with open(archive_path, 'w') as f:
-                  f.write(f'# Archived Session Notes — {today}\n\n')
-                  f.write('\n\n---\n\n'.join(archive))
+              # Append to existing archive file if it exists today
+              mode = 'a' if os.path.exists(archive_path) else 'w'
+              with open(archive_path, mode) as f:
+                  if mode == 'w':
+                      f.write(f'# Archived Memory — {today}\n\n')
+                  f.write('\n\n---\n\n'.join(archive) + '\n')
               print(f"ARCHIVED {len(archive)} section(s) to {archive_path}")
 
-          # Rewrite current.md with kept sections only
           new_content = header.rstrip()
           if keep:
               new_content += '\n\n---\n\n' + '\n\n---\n\n'.join(keep) + '\n'
