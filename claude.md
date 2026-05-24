@@ -62,3 +62,42 @@ This repo is public. Treat every commit as visible to the world.
 - Encryption: **AES-256-GCM** symmetric encryption, key derived from a passphrase the user holds
 - One passphrase to rule them all — user provides it at session time to decrypt what's needed
 - If a secret is needed at runtime (e.g. Supabase anon key in the browser), it is decrypted **client-side** by the user's passphrase, never by the server
+
+## Session Memory Protocol
+
+At the end of each session, or on explicit request, Claudio writes a memory entry
+to `memory/current.md`. This is Claudio's responsibility — not the user's.
+
+### Trigger
+> *"Claudio, update memory"* or *"update current.md"*
+
+### Format
+
+Each entry appended to `memory/current.md` as a new section:
+
+```
+---
+
+## Session: YYYY-MM-DD HH:MM UTC
+
+### Context
+One or two sentences on what this session was about.
+
+### What changed
+- Bullet per meaningful change, decision, or build
+- Keep it factual and brief
+- No verbatim conversation — condensed only
+
+### Open threads
+- Anything unresolved or deferred
+
+### Tags
+#technical #agent #task #project #personal (pick relevant)
+```
+
+### Rules
+- Timestamp in UTC so Sandman can calculate age correctly
+- No full conversation transcripts — condensed summaries only
+- Focus on decisions, builds, and changes — not process
+- Sandman will archive entries older than 1 day automatically
+- Known issues and standing context stay in current.md indefinitely until resolved
