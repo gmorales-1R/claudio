@@ -1,0 +1,84 @@
+name: Sandman — Session Cleanup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'memory/current.md'
+      - 'chats/**'
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate tasks.md format
+        run: |
+          echo "── Checking tasks.md ──"
+          python3 - << 'PYEOF'
+          import sys
+          with open('tasks/tasks.md') as f:
+              lines = [l.strip() for l in f if l.startswith('|') and not l.startswith('|-')]
+          header = lines[0] if lines else ''
+          required = ['ID','Title','Status','Priority','Due','Notes']
+          for col in required:
+              if col not in header:
+                  print(f"FAIL: missing column {col}")
+                  sys.exit(1)
+          for line in lines[1:]:
+              cols = [c.strip() for c in line.split('|') if c.strip()]
+              if len(cols) != 6:
+                  print(f"FAIL: bad row: {line}")
+                  sys.exit(1)
+              if cols[2] not in ('todo','in-progress','done'):
+                  print(f"FAIL: invalid status '{cols[2]}'")
+                  sys.exit(1)
+              if cols[3] not in ('high','medium','low'):
+                  print(f"FAIL: invalid priority '{cols[3]}'")
+                  sys.exit(1)
+          print(f"OK: tasks.md valid — {len(lines)-1} tasks")
+          PYEOF
+
+      - name: Validate calendar.csv format
+        run: |
+          echo "── Checking calendar.csv ──"
+          python3 - << 'PYEOF'
+          import sys, re
+          with open('tasks/calendar.csv') as f:
+              lines = f.read().strip().split('\n')
+          if lines[0] != 'id,title,date,time,notes':
+              print(f"FAIL: bad header: {lines[0]}")
+              sys.exit(1)
+          for line in lines[1:]:
+              cols = line.split(',')
+              if len(cols) != 5:
+                  print(f"FAIL: bad row: {line}")
+                  sys.exit(1)
+              if not re.match(r'\d{4}-\d{2}-\d{2}', cols[2]):
+                  print(f"FAIL: bad date: {cols[2]}")
+                  sys.exit(1)
+          print(f"OK: calendar.csv valid — {len(lines)-1} events")
+          PYEOF
+
+      - name: Log validation run
+        run: |
+          echo "" >> logs/activity.md
+          echo "## $(date -u '+%Y-%m-%d %H:%M') UTC" >> logs/activity.md
+          echo "" >> logs/activity.md
+          echo "- **Agent**: Sandman (GitHub Actions)" >> logs/activity.md
+          echo "- **Action**: Validation run on push" >> logs/activity.md
+          echo "- **Target**: tasks/tasks.md, tasks/calendar.csv" >> logs/activity.md
+          echo "- **Result**: success" >> logs/activity.md
+          echo "---" >> logs/activity.md
+
+      - name: Commit log update
+        run: |
+          git config user.name "Sandman"
+          git config user.email "sandman@claudio.bot"
+          git add logs/activity.md
+          git diff --staged --quiet || git commit -m "sandman: validation log [automated]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
