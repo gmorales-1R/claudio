@@ -13,7 +13,7 @@
 | UT-05 | Bridge task complete | pending | |
 | UT-06 | Bridge task delete | pending | |
 | UT-07 | Bridge calendar add | pending | |
-| E2E-01 | Add task full cycle | pass — pending UI verify | Task 4 pushed, awaiting Vercel redeploy |
+| E2E-01 | Add task full cycle | pass | Task 4 visible in UI — cache bypass confirmed |
 | E2E-02 | Complete task full cycle | pending | |
 | E2E-03 | Delete task full cycle | pending | |
 | E2E-04 | Add calendar event full cycle | pending | |

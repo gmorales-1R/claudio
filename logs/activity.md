@@ -35,3 +35,11 @@ Monitored by Roz. All agent operations recorded here.
 - **Action**: Logged Bridge operation, updated test results UT-01/02/03/04, E2E-01
 - **Target**: `logs/activity.md`, `interfaces/vercel/tests/results.md`
 - **Result**: success
+
+## 2026-05-23
+
+- **Agent**: Roz
+- **Action**: E2E-01 confirmed pass — UI verified by user after cache bypass
+- **Target**: `interfaces/vercel/tests/results.md`
+- **Result**: success
+- **Notes**: Root cause of apparent failures was browser cache, not deploy issues. Add ?v=N to bust cache during testing.
