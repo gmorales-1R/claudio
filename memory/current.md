@@ -69,3 +69,4 @@ See you next session. 🌱✨
 - **KI-01 — Stale browser cache**: Vercel deploys correctly but browser caches old versions.
   Workaround: append `?v=N` to URL, increment N each time.
   Full doc: `interfaces/vercel/known-issues.md`
+
