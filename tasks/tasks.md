@@ -11,3 +11,4 @@
 | 7 | Vault: document clipboard and extension risks | todo | low | | Security awareness |
 | 8 | Vault: evaluate secure export flow (avoid clipboard) | todo | medium | | Reduce attack surface |
 | 9 | Enable GitHub Actions (needs desktop) | todo | low | | Unblock Sandman automation |
+| 10 | Set up Supabase DB | todo | medium | | Deferred — onboarding issue. Use flat files for PoC |
