@@ -29,10 +29,7 @@ jobs:
                   sys.exit(1)
           errors = 0
           for line in lines[1:]:
-              # Split and strip, allow empty last column
               cols = [c.strip() for c in line.split('|')]
-              cols = [c for c in cols]  # keep all including empty
-              # Remove first and last empty from outer pipes
               if cols and cols[0] == '': cols = cols[1:]
               if cols and cols[-1] == '': cols = cols[:-1]
               if len(cols) != 6:
@@ -71,23 +68,117 @@ jobs:
           print(f"OK: calendar.csv valid — {len(lines)-1} events")
           PYEOF
 
-      - name: Log validation run
+      - name: Triage memory/current.md
+        run: |
+          echo "── Triaging current.md ──"
+          python3 - << 'PYEOF'
+          import os, re
+          from datetime import datetime, timezone
+
+          with open('memory/current.md') as f:
+              content = f.read()
+
+          # Split into sections by --- divider
+          sections = re.split(r'\n---\n', content)
+          
+          header = sections[0]  # Keep the file header always
+          body_sections = sections[1:]
+
+          keep = []
+          archive = []
+
+          for section in body_sections:
+              stripped = section.strip()
+              if not stripped:
+                  continue
+
+              # Detect stale session notes: "## Session: YYYY-MM-DD" older than 2 days
+              session_match = re.search(r'## Session: (\d{4}-\d{2}-\d{2})', stripped)
+              if session_match:
+                  session_date = datetime.strptime(session_match.group(1), '%Y-%m-%d').replace(tzinfo=timezone.utc)
+                  age_days = (datetime.now(timezone.utc) - session_date).days
+                  if age_days >= 2:
+                      archive.append(stripped)
+                      print(f"ARCHIVE: session note from {session_match.group(1)} ({age_days} days old)")
+                      continue
+
+              keep.append(stripped)
+
+          # Archive stale sections
+          if archive:
+              today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+              archive_path = f'memory/archive/{today}-sessions.md'
+              os.makedirs('memory/archive', exist_ok=True)
+              with open(archive_path, 'w') as f:
+                  f.write(f'# Archived Session Notes — {today}\n\n')
+                  f.write('\n\n---\n\n'.join(archive))
+              print(f"ARCHIVED {len(archive)} section(s) to {archive_path}")
+
+          # Rewrite current.md with kept sections only
+          new_content = header.rstrip()
+          if keep:
+              new_content += '\n\n---\n\n' + '\n\n---\n\n'.join(keep) + '\n'
+          else:
+              new_content += '\n'
+
+          with open('memory/current.md', 'w') as f:
+              f.write(new_content)
+
+          print(f"OK: current.md — {len(keep)} sections kept, {len(archive)} archived")
+          PYEOF
+
+      - name: Trim activity log if over 100 entries
+        run: |
+          echo "── Checking activity log size ──"
+          python3 - << 'PYEOF'
+          import os
+          from datetime import datetime, timezone
+
+          with open('logs/activity.md') as f:
+              content = f.read()
+
+          import re
+          entries = re.split(r'\n## \d{4}', content)
+          header = entries[0]
+          rest = entries[1:]
+
+          if len(rest) <= 80:
+              print(f"OK: {len(rest)} entries — no trim needed")
+          else:
+              # Keep latest 80, archive the rest
+              to_archive = rest[:-80]
+              to_keep = rest[-80:]
+              today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+              archive_path = f'logs/archive/{today}-activity.md'
+              os.makedirs('logs/archive', exist_ok=True)
+              with open(archive_path, 'w') as f:
+                  f.write(f'# Archived Activity Log — {today}\n\n')
+                  for e in to_archive:
+                      f.write('## ' + e)
+              with open('logs/activity.md', 'w') as f:
+                  f.write(header)
+                  for e in to_keep:
+                      f.write('\n## ' + e)
+              print(f"TRIMMED: archived {len(to_archive)} entries, kept {len(to_keep)}")
+          PYEOF
+
+      - name: Log run
         run: |
           echo "" >> logs/activity.md
           echo "## $(date -u '+%Y-%m-%d %H:%M') UTC" >> logs/activity.md
           echo "" >> logs/activity.md
           echo "- **Agent**: Sandman (GitHub Actions)" >> logs/activity.md
-          echo "- **Action**: Validation run on push" >> logs/activity.md
-          echo "- **Target**: tasks/tasks.md, tasks/calendar.csv" >> logs/activity.md
+          echo "- **Action**: Validation + memory triage on push" >> logs/activity.md
+          echo "- **Target**: tasks/tasks.md, calendar.csv, memory/current.md, logs/activity.md" >> logs/activity.md
           echo "- **Result**: success" >> logs/activity.md
           echo "---" >> logs/activity.md
 
-      - name: Commit log update
+      - name: Commit changes
         run: |
           git config user.name "Sandman"
           git config user.email "sandman@claudio.bot"
-          git add logs/activity.md
-          git diff --staged --quiet || git commit -m "sandman: validation log [automated]"
+          git add memory/current.md memory/archive/ logs/activity.md logs/archive/
+          git diff --staged --quiet || git commit -m "sandman: memory triage + validation [automated]"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
